@@ -1474,9 +1474,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prb/hardhat-template@workspace:.":
+"@philbirt/event-staking@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@prb/hardhat-template@workspace:."
+  resolution: "@philbirt/event-staking@workspace:."
   dependencies:
     "@commitlint/cli": ^17.3.0
     "@commitlint/config-conventional": ^17.3.0
