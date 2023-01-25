@@ -6,6 +6,7 @@ import "hardhat/console.sol";
 error EventStaking_Rsvp_Price_Not_Met();
 error EventStaking_Event_Not_Found();
 error EventStaking_Cannot_Withdraw_Not_Creator();
+error EventStaking_RSVP_Not_Found();
 
 contract EventStaking {
     /**
@@ -17,15 +18,13 @@ contract EventStaking {
         /// @notice The name for the event.
         string name;
         /// @notice The number of participants that can join the event.
-        /// @dev 2^32 = 4,294,967,296 which should allow us to include half the earth population
-        uint32 maxParticipantCount;
+        uint256 maxParticipantCount;
         /// @notice The price of attendance.
-        /// @dev The maximum price that can be set is ~1.2M (2^80/10^18) ETH.
-        uint80 rsvpPrice;
+        uint256 rsvpPrice;
         /// @notice The time that the event starts.
-        uint32 eventStartDateInSeconds;
+        uint256 eventStartDateInSeconds;
         /// @notice The time that the event lasts.
-        uint32 eventDurationInSeconds;
+        uint256 eventDurationInSeconds;
     }
     /// @notice Tracks the next sequence ID to be assigned to an exhibition.
     uint256 private lastStakedEventId;
@@ -35,7 +34,7 @@ contract EventStaking {
 
     /// @notice Maps the event ID to a mapping of addresses to RSVP statuses.
     /// @dev 0 means not RSVP'd, true means RSVP'd, false means checked in
-    mapping(uint256 => mapping(uint256 => bool)) private eventIdToRsvpMapping;
+    mapping(uint256 => mapping(address => bool)) private eventIdToRsvpMapping;
 
     /// @notice Maps the event ID to the total staked amount.
     mapping(uint256 => uint256) private idToStakedAmount;
@@ -54,10 +53,10 @@ contract EventStaking {
         uint256 indexed eventId,
         address indexed creator,
         string name,
-        uint32 maxParticipantCount,
-        uint80 rsvpPrice,
-        uint32 eventStartDateInSeconds,
-        uint32 eventDurationInSeconds
+        uint256 maxParticipantCount,
+        uint256 rsvpPrice,
+        uint256 eventStartDateInSeconds,
+        uint256 eventDurationInSeconds
     );
 
     /**
@@ -83,7 +82,7 @@ contract EventStaking {
 
     /// @notice Requires the staked event exists
     modifier stakedEventExists(uint256 eventId) {
-        if (idToStakedEvent[eventId] == 0) {
+        if (idToStakedEvent[eventId].creator == address(0)) {
             revert EventStaking_Event_Not_Found();
         }
         _;
@@ -110,8 +109,7 @@ contract EventStaking {
             eventId = ++lastStakedEventId;
         }
         idToStakedEvent[eventId] = StakedEvent({
-            id: eventId,
-            creator: payable(_msgSender()),
+            creator: payable(msg.sender),
             name: eventName,
             maxParticipantCount: maxParticipantCount,
             rsvpPrice: rsvpPrice,
@@ -119,8 +117,8 @@ contract EventStaking {
             eventDurationInSeconds: eventDurationInSeconds
         });
         emit StakedEventCreated({
-            exhibitionId: exhibitionId,
-            creator: _msgSender(),
+            eventId: eventId,
+            creator: msg.sender,
             name: eventName,
             maxParticipantCount: maxParticipantCount,
             rsvpPrice: rsvpPrice,
@@ -137,10 +135,10 @@ contract EventStaking {
      * @return eventName The name of the event
      * @return creator The creator of the event.
      */
-    function getEventMetadata(uint256 eventId) external view returns (string eventName, address creator) {
+    function getEventMetadata(uint256 eventId) external view returns (string memory eventName, address creator) {
         StakedEvent memory stakedEvent = idToStakedEvent[eventId];
         eventName = stakedEvent.name;
-        creator = stakedEvent.curator;
+        creator = stakedEvent.creator;
     }
 
     /**
@@ -153,9 +151,9 @@ contract EventStaking {
             // TODO: what happens if someone overpays? Should we allow?
             revert EventStaking_Rsvp_Price_Not_Met();
         }
-        eventIdToRsvpMapping[eventId][_msgSender()] = true;
+        eventIdToRsvpMapping[eventId][msg.sender] = true;
         idToStakedAmount[eventId] += msg.value;
-        emit RSVP({ eventId: eventId, participant: _msgSender() });
+        emit RSVP({ eventId: eventId, participant: msg.sender });
     }
 
     /**
@@ -167,14 +165,14 @@ contract EventStaking {
      *  3) If check-in is successful, the staked ETH should be returned back to the participant.
      */
     function checkIn(uint256 eventId) external payable stakedEventExists(eventId) {
-        if (eventIdToRsvpMapping[eventId] == 0 || eventIdToRsvpMapping[eventId][_msgSender()] != true) {
+        if (eventIdToRsvpMapping[eventId][msg.sender] != true) {
             revert EventStaking_RSVP_Not_Found();
         }
         // TODO: Check the event time, return an error if the event is not started or in progress
-        eventIdToRsvpMapping[eventId][_msgSender()] = false;
-        uint256 memory stakedAmountForEvent = idToStakedAmount[eventId];
-        _msgSender().send(stakedAmountForEvent);
-        emit Checkin({ eventId: eventId, participant: _msgSender() });
+        eventIdToRsvpMapping[eventId][msg.sender] = false;
+        uint256 stakedAmountForEvent = idToStakedAmount[eventId];
+        payable(msg.sender).transfer(stakedAmountForEvent);
+        emit Checkin({ eventId: eventId, participant: msg.sender });
     }
 
     /**
@@ -187,12 +185,13 @@ contract EventStaking {
      */
     function withdrawProceeds(uint256 eventId) external stakedEventExists(eventId) {
         StakedEvent memory stakedEvent = idToStakedEvent[eventId];
-        if (stakedEvent.creator != _msgSender()) {
+        if (stakedEvent.creator != msg.sender) {
             revert EventStaking_Cannot_Withdraw_Not_Creator();
         }
         // TODO: Check event has ended
-        uint256 memory stakedAmountForEvent = idToStakedAmount[eventId];
-        _msgSender().send(stakedAmountForEvent);
+        uint256 stakedAmountForEvent = idToStakedAmount[eventId];
+        idToStakedAmount[eventId] = 0;
+        payable(msg.sender).transfer(stakedAmountForEvent);
         emit Withdraw({ eventId: eventId, amount: stakedAmountForEvent });
     }
 }
