@@ -99,7 +99,7 @@ describe("Unit tests", function () {
         beforeEach(async function () {
           this.rsvpPrice = 2;
           await this.eventStaking.connect(this.user1).createEvent("yakult event", 1, this.rsvpPrice, 1000, 2000);
-          setETHBalance(this.user1, ethers.utils.parseEther("100"));
+          await setETHBalance(this.user1, ethers.utils.parseEther("100"));
         });
 
         context("when the rsvp amount is too low", async function () {
@@ -166,7 +166,7 @@ describe("Unit tests", function () {
         beforeEach(async function () {
           this.rsvpPrice = 2;
           await this.eventStaking.connect(this.user1).createEvent("yakult event", 1, this.rsvpPrice, 1000, 2000);
-          setETHBalance(this.user1, ethers.utils.parseEther("100"));
+          await setETHBalance(this.user1, ethers.utils.parseEther("100"));
         });
 
         context("when rsvp does not exist", async function () {
@@ -238,8 +238,8 @@ describe("Unit tests", function () {
             .createEvent("yakult event", this.maxParticipantCount, this.rsvpPrice, 1000, 2000);
 
           // Give the users some eth to rsvp
-          setETHBalance(this.user1, ethers.utils.parseEther("100"));
-          setETHBalance(this.user2, ethers.utils.parseEther("100"));
+          await setETHBalance(this.user1, ethers.utils.parseEther("100"));
+          await setETHBalance(this.user2, ethers.utils.parseEther("100"));
 
           // RSVP both users to event #1
           await this.eventStaking.connect(this.user1).rsvp(1, { value: this.rsvpPrice });
