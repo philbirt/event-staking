@@ -246,6 +246,15 @@ describe("Unit tests", function () {
           await this.eventStaking.connect(this.user2).rsvp(1, { value: this.rsvpPrice });
         });
 
+        context("when a random user withdraws", async function () {
+          it("should revert", async function () {
+            await expect(this.eventStaking.connect(this.user2).withdrawProceeds(1)).to.be.revertedWithCustomError(
+              this.eventStaking,
+              "EventStaking_Cannot_Withdraw_Not_Creator",
+            );
+          });
+        });
+
         context("when the creator of the event withdraws", async function () {
           it("emits an event", async function () {
             const withdrawTx = await this.eventStaking.connect(this.user1).withdrawProceeds(1);
@@ -261,6 +270,19 @@ describe("Unit tests", function () {
 
             // Would like a stronger assertion
             // expect(balanceAfter).to.be.greaterThan(balanceBefore);
+          });
+
+          context("when the creator of the event withdraws a second time", async function () {
+            beforeEach(async function () {
+              await this.eventStaking.connect(this.user1).withdrawProceeds(1);
+            });
+
+            it("should revert", async function () {
+              await expect(this.eventStaking.connect(this.user1).withdrawProceeds(1)).to.be.revertedWithCustomError(
+                this.eventStaking,
+                "EventStaking_Withdraw_Amount_Zero",
+              );
+            });
           });
         });
       });
