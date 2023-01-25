@@ -3,10 +3,18 @@ pragma solidity >=0.8.4;
 
 import "hardhat/console.sol";
 
-error EventStaking_Rsvp_Price_Not_Met();
 error EventStaking_Event_Not_Found();
+error EventStaking_Max_Participants_Cannot_Be_Zero();
+error EventStaking_No_Free_Events();
+error EventStaking_Start_Time_Required();
+error EventStaking_Duration_Required();
+error EventStaking_Rsvp_Not_Found();
+error EventStaking_Rsvp_Price_Not_Met();
+error EventStaking_Rsvp_Already_Set();
+error EventStaking_Event_Overbooked();
+error EventStaking_Rsvp_Already_Checked_In();
 error EventStaking_Cannot_Withdraw_Not_Creator();
-error EventStaking_RSVP_Not_Found();
+error EventStaking_Withdraw_Amount_Zero();
 
 contract EventStaking {
     /**
@@ -32,12 +40,20 @@ contract EventStaking {
     /// @notice Maps the event ID to their details.
     mapping(uint256 => StakedEvent) private idToStakedEvent;
 
+    enum RSVP {
+        NOT_ATTENDING,
+        ATTENDING,
+        CHECKIN
+    }
+
     /// @notice Maps the event ID to a mapping of addresses to RSVP statuses.
-    /// @dev 0 means not RSVP'd, true means RSVP'd, false means checked in
-    mapping(uint256 => mapping(address => bool)) private eventIdToRsvpMapping;
+    mapping(uint256 => mapping(address => RSVP)) private eventIdToRsvpMapping;
 
     /// @notice Maps the event ID to the total staked amount.
     mapping(uint256 => uint256) private idToStakedAmount;
+
+    /// @notice maps the event ID to the total number of RSVP'd participants
+    mapping(uint256 => uint256) private idToRsvpParticipantCount;
 
     /**
      * @notice Emitted when an event is created.
@@ -64,14 +80,14 @@ contract EventStaking {
      * @param eventId the ID of the event
      * @param participant the address of the participant
      */
-    event RSVP(uint256 indexed eventId, address participant);
+    event RSVPAdded(uint256 indexed eventId, address participant, uint256 amountStaked);
 
     /**
      * @notice Emitted when an Checkin is created
      * @param eventId the ID of the event
      * @param participant the address of the participant
      */
-    event Checkin(uint256 indexed eventId, address participant);
+    event CheckinAdded(uint256 indexed eventId, address participant);
 
     /**
      * @notice Emitted when an withdraw happens
@@ -103,8 +119,19 @@ contract EventStaking {
         uint256 eventStartDateInSeconds,
         uint256 eventDurationInSeconds
     ) external returns (uint256 eventId) {
-        // TODO: Validate rsvp price below max?
-        // TODO: Validate start and duration below max?
+        if (maxParticipantCount == 0) {
+            revert EventStaking_Max_Participants_Cannot_Be_Zero();
+        }
+        if (rsvpPrice == 0) {
+            revert EventStaking_No_Free_Events();
+        }
+        if (eventStartDateInSeconds == 0) {
+            revert EventStaking_Start_Time_Required();
+        }
+        if (eventDurationInSeconds == 0) {
+            revert EventStaking_Duration_Required();
+        }
+
         unchecked {
             eventId = ++lastStakedEventId;
         }
@@ -151,9 +178,23 @@ contract EventStaking {
             // TODO: what happens if someone overpays? Should we allow?
             revert EventStaking_Rsvp_Price_Not_Met();
         }
-        eventIdToRsvpMapping[eventId][msg.sender] = true;
+
+        RSVP rsvpState = eventIdToRsvpMapping[eventId][msg.sender];
+        if (rsvpState == RSVP.ATTENDING) {
+            revert EventStaking_Rsvp_Already_Set();
+        }
+        if (rsvpState == RSVP.CHECKIN) {
+            revert EventStaking_Rsvp_Already_Checked_In();
+        }
+
+        if (idToRsvpParticipantCount[eventId] >= stakedEvent.maxParticipantCount) {
+            revert EventStaking_Event_Overbooked();
+        }
+
+        eventIdToRsvpMapping[eventId][msg.sender] = RSVP.ATTENDING;
         idToStakedAmount[eventId] += msg.value;
-        emit RSVP({ eventId: eventId, participant: msg.sender });
+        ++idToRsvpParticipantCount[eventId];
+        emit RSVPAdded({ eventId: eventId, participant: msg.sender, amountStaked: msg.value });
     }
 
     /**
@@ -165,14 +206,17 @@ contract EventStaking {
      *  3) If check-in is successful, the staked ETH should be returned back to the participant.
      */
     function checkIn(uint256 eventId) external payable stakedEventExists(eventId) {
-        if (eventIdToRsvpMapping[eventId][msg.sender] != true) {
-            revert EventStaking_RSVP_Not_Found();
+        if (eventIdToRsvpMapping[eventId][msg.sender] == RSVP.CHECKIN) {
+            revert EventStaking_Rsvp_Already_Checked_In();
+        }
+        if (eventIdToRsvpMapping[eventId][msg.sender] != RSVP.ATTENDING) {
+            revert EventStaking_Rsvp_Not_Found();
         }
         // TODO: Check the event time, return an error if the event is not started or in progress
-        eventIdToRsvpMapping[eventId][msg.sender] = false;
+        eventIdToRsvpMapping[eventId][msg.sender] = RSVP.CHECKIN;
         uint256 stakedAmountForEvent = idToStakedAmount[eventId];
         payable(msg.sender).transfer(stakedAmountForEvent);
-        emit Checkin({ eventId: eventId, participant: msg.sender });
+        emit CheckinAdded({ eventId: eventId, participant: msg.sender });
     }
 
     /**
@@ -187,6 +231,9 @@ contract EventStaking {
         StakedEvent memory stakedEvent = idToStakedEvent[eventId];
         if (stakedEvent.creator != msg.sender) {
             revert EventStaking_Cannot_Withdraw_Not_Creator();
+        }
+        if (idToStakedAmount[eventId] == 0) {
+            revert EventStaking_Withdraw_Amount_Zero();
         }
         // TODO: Check event has ended
         uint256 stakedAmountForEvent = idToStakedAmount[eventId];
