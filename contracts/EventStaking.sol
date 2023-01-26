@@ -80,14 +80,14 @@ contract EventStaking {
      * @param eventId the ID of the event
      * @param participant the address of the participant
      */
-    event RSVPAdded(uint256 indexed eventId, address participant, uint256 amountStaked);
+    event RSVPAdded(uint256 indexed eventId, address indexed participant, uint256 amountStaked);
 
     /**
      * @notice Emitted when an Checkin is created
      * @param eventId the ID of the event
      * @param participant the address of the participant
      */
-    event CheckinAdded(uint256 indexed eventId, address participant);
+    event CheckinAdded(uint256 indexed eventId, address indexed participant);
 
     /**
      * @notice Emitted when an withdraw happens
@@ -152,8 +152,6 @@ contract EventStaking {
             eventStartDateInSeconds: eventStartDateInSeconds,
             eventDurationInSeconds: eventDurationInSeconds
         });
-
-        return eventId;
     }
 
     /**
@@ -163,7 +161,7 @@ contract EventStaking {
      * @return creator The creator of the event.
      */
     function getEventMetadata(uint256 eventId) external view returns (string memory eventName, address creator) {
-        StakedEvent memory stakedEvent = idToStakedEvent[eventId];
+        StakedEvent storage stakedEvent = idToStakedEvent[eventId];
         eventName = stakedEvent.name;
         creator = stakedEvent.creator;
     }
@@ -206,10 +204,10 @@ contract EventStaking {
      *  3) If check-in is successful, the staked ETH should be returned back to the participant.
      */
     function checkIn(uint256 eventId) external payable stakedEventExists(eventId) {
-        if (eventIdToRsvpMapping[eventId][msg.sender] == RSVP.CHECKIN) {
-            revert EventStaking_Rsvp_Already_Checked_In();
-        }
         if (eventIdToRsvpMapping[eventId][msg.sender] != RSVP.ATTENDING) {
+            if (eventIdToRsvpMapping[eventId][msg.sender] == RSVP.CHECKIN) {
+                revert EventStaking_Rsvp_Already_Checked_In();
+            }
             revert EventStaking_Rsvp_Not_Found();
         }
         // TODO: Check the event time, return an error if the event is not started or in progress
