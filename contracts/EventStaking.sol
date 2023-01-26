@@ -176,7 +176,7 @@ contract EventStaking {
      * @param eventId The id of the event.
      */
     function rsvp(uint256 eventId) external payable stakedEventExists(eventId) {
-        StakedEvent memory stakedEvent = idToStakedEvent[eventId];
+        StakedEvent storage stakedEvent = idToStakedEvent[eventId];
         if (stakedEvent.rsvpPrice > msg.value) {
             // TODO: what happens if someone overpays? Should we allow?
             revert EventStaking_Rsvp_Price_Not_Met();
@@ -209,7 +209,7 @@ contract EventStaking {
      *  3) If check-in is successful, the staked ETH should be returned back to the participant.
      */
     function checkIn(uint256 eventId) external payable stakedEventExists(eventId) {
-        StakedEvent memory stakedEvent = idToStakedEvent[eventId];
+        StakedEvent storage stakedEvent = idToStakedEvent[eventId];
         if (
             block.timestamp < stakedEvent.eventStartDateInSeconds || block.timestamp > stakedEvent.eventEndDateInSeconds
         ) {
@@ -237,7 +237,7 @@ contract EventStaking {
      *  3) Can only be executed once the event has ended.
      */
     function withdrawProceeds(uint256 eventId) external stakedEventExists(eventId) {
-        StakedEvent memory stakedEvent = idToStakedEvent[eventId];
+        StakedEvent storage stakedEvent = idToStakedEvent[eventId];
         if (block.timestamp <= stakedEvent.eventEndDateInSeconds) {
             revert EventStaking_Event_Not_Ended();
         }
