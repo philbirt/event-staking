@@ -23,7 +23,7 @@ describe("Unit tests", function () {
     });
 
     describe("createEvent", function () {
-      context("when no max participants is given", async function () {
+      describe("when no max participants is given", async function () {
         it("should revert", async function () {
           await expect(
             this.eventStaking.connect(this.user1).createEvent("yakult event", 0, 1, this.currentTime, ONE_HOUR),
@@ -31,7 +31,7 @@ describe("Unit tests", function () {
         });
       });
 
-      context("when no rsvp price is given", async function () {
+      describe("when no rsvp price is given", async function () {
         it("should revert", async function () {
           await expect(
             this.eventStaking.connect(this.user1).createEvent("yakult event", 1, 0, this.currentTime, ONE_HOUR),
@@ -39,7 +39,7 @@ describe("Unit tests", function () {
         });
       });
 
-      context("when no eventStartDateInSeconds is given", async function () {
+      describe("when no eventStartDateInSeconds is given", async function () {
         it("should revert", async function () {
           await expect(
             this.eventStaking.connect(this.user1).createEvent("yakult event", 1, 1, 0, ONE_HOUR),
@@ -47,7 +47,7 @@ describe("Unit tests", function () {
         });
       });
 
-      context("when no eventDurationInSeconds is given", async function () {
+      describe("when no eventDurationInSeconds is given", async function () {
         it("should revert", async function () {
           await expect(
             this.eventStaking.connect(this.user1).createEvent("yakult event", 1, 1, this.currentTime, 0),
@@ -55,7 +55,7 @@ describe("Unit tests", function () {
         });
       });
 
-      context("when successful", async function () {
+      describe("when successful", async function () {
         it("should emit StakedEventCreated event", async function () {
           const tx = await this.eventStaking
             .connect(this.user1)
@@ -93,7 +93,7 @@ describe("Unit tests", function () {
     });
 
     describe("rsvp", function () {
-      context("when event does not exist", async function () {
+      describe("when event does not exist", async function () {
         it("should revert", async function () {
           await expect(this.eventStaking.connect(this.user1).rsvp(1, { value: 2 })).to.be.revertedWithCustomError(
             this.eventStaking,
@@ -102,7 +102,7 @@ describe("Unit tests", function () {
         });
       });
 
-      context("when event exists", async function () {
+      describe("when event exists", async function () {
         beforeEach(async function () {
           this.rsvpPrice = 2;
           await this.eventStaking
@@ -111,7 +111,7 @@ describe("Unit tests", function () {
           await setETHBalance(this.user1, ethers.utils.parseEther("100"));
         });
 
-        context("when the rsvp amount is too low", async function () {
+        describe("when the rsvp amount is too low", async function () {
           it("should revert", async function () {
             await expect(
               this.eventStaking.connect(this.user1).rsvp(1, { value: this.rsvpPrice - 1 }),
@@ -119,7 +119,7 @@ describe("Unit tests", function () {
           });
         });
 
-        context("when already rsvp'd", async function () {
+        describe("when already rsvp'd", async function () {
           beforeEach(async function () {
             await this.eventStaking.connect(this.user1).rsvp(1, { value: this.rsvpPrice });
           });
@@ -131,7 +131,7 @@ describe("Unit tests", function () {
           });
         });
 
-        context("when already checked in", async function () {
+        describe("when already checked in", async function () {
           beforeEach(async function () {
             await this.eventStaking.connect(this.user1).rsvp(1, { value: this.rsvpPrice });
             await this.eventStaking.connect(this.user1).checkIn(1);
@@ -144,7 +144,7 @@ describe("Unit tests", function () {
           });
         });
 
-        context("when the event has too many participants", async function () {
+        describe("when the event has too many participants", async function () {
           it("should revert", async function () {
             await this.eventStaking.connect(this.user1).rsvp(1, { value: this.rsvpPrice });
 
@@ -154,7 +154,7 @@ describe("Unit tests", function () {
           });
         });
 
-        context("when successful", async function () {
+        describe("when successful", async function () {
           it("should emit an RSVPAdded event", async function () {
             const rsvpTx = await this.eventStaking.connect(this.user1).rsvp(1, { value: this.rsvpPrice });
             await expect(rsvpTx)
@@ -166,7 +166,7 @@ describe("Unit tests", function () {
     });
 
     describe("checkIn", function () {
-      context("when event does not exist", async function () {
+      describe("when event does not exist", async function () {
         it("should revert", async function () {
           await expect(this.eventStaking.connect(this.user1).rsvp(1, { value: 2 })).to.be.revertedWithCustomError(
             this.eventStaking,
@@ -175,7 +175,7 @@ describe("Unit tests", function () {
         });
       });
 
-      context("when event exists", async function () {
+      describe("when event exists", async function () {
         beforeEach(async function () {
           this.rsvpPrice = 2;
           await this.eventStaking
@@ -184,7 +184,7 @@ describe("Unit tests", function () {
           await setETHBalance(this.user1, ethers.utils.parseEther("100"));
         });
 
-        context("when its before the event starts", async function () {
+        describe("when its before the event starts", async function () {
           it("should revert", async function () {
             await expect(this.eventStaking.connect(this.user1).checkIn(1)).to.be.revertedWithCustomError(
               this.eventStaking,
@@ -193,7 +193,7 @@ describe("Unit tests", function () {
           });
         });
 
-        context("when its after the event ends", async function () {
+        describe("when its after the event ends", async function () {
           beforeEach(async function () {
             await increaseTimeTo(this.currentTime + ONE_HOUR + ONE_HOUR, true);
           });
@@ -206,12 +206,12 @@ describe("Unit tests", function () {
           });
         });
 
-        context("when its during the event", async function () {
+        describe("when its during the event", async function () {
           beforeEach(async function () {
             await increaseTimeTo(this.currentTime + ONE_HOUR, true);
           });
 
-          context("when rsvp does not exist", async function () {
+          describe("when rsvp does not exist", async function () {
             it("should revert", async function () {
               await expect(this.eventStaking.connect(this.user1).checkIn(1)).to.be.revertedWithCustomError(
                 this.eventStaking,
@@ -220,13 +220,13 @@ describe("Unit tests", function () {
             });
           });
 
-          context("when rsvp exists", async function () {
+          describe("when rsvp exists", async function () {
             beforeEach(async function () {
               await this.eventStaking.connect(this.user1).rsvp(1, { value: this.rsvpPrice });
             });
 
-            context("when the event is in progress", async function () {
-              context("when already checked in", async function () {
+            describe("when the event is in progress", async function () {
+              describe("when already checked in", async function () {
                 it("should revert", async function () {
                   await this.eventStaking.connect(this.user1).checkIn(1);
 
@@ -237,7 +237,7 @@ describe("Unit tests", function () {
                 });
               });
 
-              context("when successful", async function () {
+              describe("when successful", async function () {
                 it("emits an event", async function () {
                   const checkinTx = await this.eventStaking.connect(this.user1).checkIn(1);
                   await expect(checkinTx).to.emit(this.eventStaking, "CheckinAdded").withArgs(1, this.user1.address);
@@ -250,7 +250,7 @@ describe("Unit tests", function () {
     });
 
     describe("withdrawProceeds", function () {
-      context("when event does not exist", async function () {
+      describe("when event does not exist", async function () {
         it("should revert", async function () {
           await expect(this.eventStaking.connect(this.user1).withdrawProceeds(1)).to.be.revertedWithCustomError(
             this.eventStaking,
@@ -259,7 +259,7 @@ describe("Unit tests", function () {
         });
       });
 
-      context("when event exists", async function () {
+      describe("when event exists", async function () {
         beforeEach(async function () {
           this.rsvpPrice = 2;
           this.maxParticipantCount = 10;
@@ -270,7 +270,7 @@ describe("Unit tests", function () {
             .createEvent("yakult event", this.maxParticipantCount, this.rsvpPrice, this.currentTime, ONE_HOUR);
         });
 
-        context("when its before the event ends", async function () {
+        describe("when its before the event ends", async function () {
           it("should revert", async function () {
             await expect(this.eventStaking.connect(this.user1).withdrawProceeds(1)).to.be.revertedWithCustomError(
               this.eventStaking,
@@ -279,12 +279,12 @@ describe("Unit tests", function () {
           });
         });
 
-        context("when its after the event ends", async function () {
+        describe("when its after the event ends", async function () {
           beforeEach(async function () {
             await increaseTimeTo(this.currentTime + ONE_HOUR, true);
           });
 
-          context("when the event has no staked amount", async function () {
+          describe("when the event has no staked amount", async function () {
             beforeEach(async function () {
               await this.eventStaking.connect(this.user1).createEvent("yakult event", 1, 1, this.currentTime, ONE_HOUR);
             });
@@ -297,7 +297,7 @@ describe("Unit tests", function () {
             });
           });
 
-          context("when the event has a staked amount", async function () {
+          describe("when the event has a staked amount", async function () {
             beforeEach(async function () {
               // Give the users some eth to rsvp
               await setETHBalance(this.user1, ethers.utils.parseEther("100"));
@@ -308,7 +308,7 @@ describe("Unit tests", function () {
               await this.eventStaking.connect(this.user2).rsvp(1, { value: this.rsvpPrice });
             });
 
-            context("when a random user withdraws", async function () {
+            describe("when a random user withdraws", async function () {
               it("should revert", async function () {
                 await expect(this.eventStaking.connect(this.user2).withdrawProceeds(1)).to.be.revertedWithCustomError(
                   this.eventStaking,
@@ -317,7 +317,7 @@ describe("Unit tests", function () {
               });
             });
 
-            context("when the creator of the event withdraws", async function () {
+            describe("when the creator of the event withdraws", async function () {
               it("emits an event", async function () {
                 const withdrawTx = await this.eventStaking.connect(this.user1).withdrawProceeds(1);
                 await expect(withdrawTx)
@@ -334,7 +334,7 @@ describe("Unit tests", function () {
                 // expect(balanceAfter).to.be.greaterThan(balanceBefore);
               });
 
-              context("when the creator of the event withdraws a second time", async function () {
+              describe("when the creator of the event withdraws a second time", async function () {
                 beforeEach(async function () {
                   await this.eventStaking.connect(this.user1).withdrawProceeds(1);
                 });
