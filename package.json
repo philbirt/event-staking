@@ -39,6 +39,8 @@
     "fs-extra": "^10.1.0",
     "hardhat": "^2.12.2",
     "hardhat-gas-reporter": "^1.0.9",
+    "hardhat-helpers": "^0.1.47",
+    "hardhat-tracer": "^1.2.1",
     "husky": "^8.0.2",
     "lint-staged": "^13.0.4",
     "lodash": "^4.17.21",
@@ -89,5 +91,8 @@
     "prettier:write": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
     "test": "hardhat test",
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.1"
   }
 }

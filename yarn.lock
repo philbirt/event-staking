@@ -1474,9 +1474,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prb/hardhat-template@workspace:.":
+"@openzeppelin/contracts@npm:^4.8.1":
+  version: 4.8.1
+  resolution: "@openzeppelin/contracts@npm:4.8.1"
+  checksum: 99acefde1ae42c2d935ec9b4ebd327e786c499a4ec76b9582eb9adb0ff94a77c48047332fba44fb97b82b5a46d80e74d3e5d8cf73d5defa7f746f2a67f070281
+  languageName: node
+  linkType: hard
+
+"@philbirt/event-staking@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@prb/hardhat-template@workspace:."
+  resolution: "@philbirt/event-staking@workspace:."
   dependencies:
     "@commitlint/cli": ^17.3.0
     "@commitlint/config-conventional": ^17.3.0
@@ -1490,6 +1497,7 @@ __metadata:
     "@nomicfoundation/hardhat-toolbox": ^2.0.0
     "@nomiclabs/hardhat-ethers": ^2.2.1
     "@nomiclabs/hardhat-etherscan": ^3.1.2
+    "@openzeppelin/contracts": ^4.8.1
     "@trivago/prettier-plugin-sort-imports": ^4.0.0
     "@typechain/ethers-v5": ^10.1.1
     "@typechain/hardhat": ^6.1.4
@@ -1510,6 +1518,8 @@ __metadata:
     fs-extra: ^10.1.0
     hardhat: ^2.12.2
     hardhat-gas-reporter: ^1.0.9
+    hardhat-helpers: ^0.1.47
+    hardhat-tracer: ^1.2.1
     husky: ^8.0.2
     lint-staged: ^13.0.4
     lodash: ^4.17.21
@@ -4418,7 +4428,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^5.7.2":
+"ethers@npm:^5.6.1, ethers@npm:^5.7.2":
   version: 5.7.2
   resolution: "ethers@npm:5.7.2"
   dependencies:
@@ -5380,6 +5390,31 @@ __metadata:
   peerDependencies:
     hardhat: ^2.0.2
   checksum: 77f8f8d085ff3d9d7787f0227e5355e1800f7d6707bc70171e0567bf69706703ae7f6f53dce1be1d409e7e71e3629a434c94b546bdbbc1e4c1af47cd5d0c6776
+  languageName: node
+  linkType: hard
+
+"hardhat-helpers@npm:^0.1.47":
+  version: 0.1.47
+  resolution: "hardhat-helpers@npm:0.1.47"
+  peerDependencies:
+    "@nomicfoundation/hardhat-chai-matchers": ^1.0.0
+    chai: ^4.3.0
+    ethers: ^5.6.0
+    hardhat: ^2.0.0
+  checksum: 0e743838b7587266fba9303fdaf4c29638fbad9d7cc5bc94539773c0b4f8a80d37f96095eaebd461984e23c9678d940cd009000a5f0eb8b07cf56009201ea64c
+  languageName: node
+  linkType: hard
+
+"hardhat-tracer@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "hardhat-tracer@npm:1.2.1"
+  dependencies:
+    ethers: ^5.6.1
+  peerDependencies:
+    chalk: 4.x
+    ethers: 5.x
+    hardhat: 2.x
+  checksum: 14f33443ea2de639e71c6921ba057253a77ff9d05d6212d0ee82d84b531a703be7cc04820b4d872283f749ac46fcbfc48584ef63bef50139cbdf84ffe0f43193
   languageName: node
   linkType: hard
 
